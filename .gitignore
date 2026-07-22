@@ -1,0 +1,26 @@
+# Secrets & local env
+.venv/
+.env
+*.db
+checkpoints.db
+
+# Python / Jupyter
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Generated outputs
+exports/*
+!exports/.gitkeep
+
+# Dataset (too large for GitHub — see README)
+archive (3)/*.csv
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Workshop leftovers (not part of this app)
+skills/
+policy/
+campus_server.py

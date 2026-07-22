@@ -1,0 +1,13 @@
+[server]
+# Avoid path bugs with folders like "archive (3)" on Windows
+fileWatcherType = "poll"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#60a5fa"
+backgroundColor = "#0f1419"
+secondaryBackgroundColor = "#1a2332"
+textColor = "#e7ecf3"
