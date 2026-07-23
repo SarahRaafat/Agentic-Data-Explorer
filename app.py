@@ -50,6 +50,8 @@ def init_state() -> None:
         st.session_state.messages = []
     if "theme" not in st.session_state:
         st.session_state.theme = THEMES["dark"].copy()
+    elif st.session_state.theme.get("name") not in THEMES:
+        st.session_state.theme = THEMES["dark"].copy()
     if "pending_question" not in st.session_state:
         st.session_state.pending_question = None
     # Drop legacy message shapes that break the new renderer
@@ -80,77 +82,172 @@ def apply_theme_css(theme: dict) -> None:
     bg = theme.get("bg", "#f7f8fa")
     card = theme.get("card", "#ffffff")
     text = theme.get("text", "#1a1a1a")
+    muted = theme.get("muted", "#666666")
     accent = theme.get("accent", "#2563eb")
-    muted = text
+    border = theme.get("border", "#d6dde8")
+
+    button = theme.get("button", accent)
+    button_hover = theme.get("button_hover", accent)
+    button_text = theme.get("button_text", "#ffffff")
+    input_bg = theme.get("input_bg", card)
+
     st.markdown(
         f"""
-        <style>
-        .stApp,
-        .stApp [data-testid="stAppViewContainer"],
-        .stApp [data-testid="stHeader"],
-        section[data-testid="stSidebar"],
-        section[data-testid="stSidebar"] > div {{
-            background-color: {bg} !important;
-            color: {text} !important;
-        }}
+<style>
 
-        .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
-        .stApp p, .stApp span, .stApp label, .stApp li,
-        .stApp [data-testid="stMarkdownContainer"],
-        .stApp [data-testid="stMarkdownContainer"] *,
-        .stApp [data-testid="stWidgetLabel"],
-        .stApp [data-testid="stWidgetLabel"] *,
-        .stApp [data-testid="stCaptionContainer"],
-        .stApp [data-testid="stCaptionContainer"] *,
-        .stApp [data-testid="stChatMessageContent"],
-        .stApp [data-testid="stChatMessageContent"] *,
-        section[data-testid="stSidebar"] h1,
-        section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3,
-        section[data-testid="stSidebar"] p,
-        section[data-testid="stSidebar"] span,
-        section[data-testid="stSidebar"] label,
-        section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
-        section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] * {{
-            color: {text} !important;
-        }}
+html, body,
+.stApp,
+[data-testid="stAppViewContainer"] {{
+    background:{bg} !important;
+    color:{text} !important;
+}}
 
-        .stApp a {{ color: {accent} !important; }}
+[data-testid="stHeader"]{{
+    background:{bg} !important;
+}}
 
-        div[data-testid="stChatMessage"] {{
-            background: {card} !important;
-            border: 1px solid {accent}33;
-            border-radius: 12px;
-            padding: 0.25rem 0.5rem;
-            color: {text} !important;
-        }}
+section[data-testid="stSidebar"],
+section[data-testid="stSidebar"]>div{{
+    background:{card} !important;
+    border-right:1px solid {border};
+}}
 
-        .stApp [data-baseweb="select"] > div,
-        .stApp input, .stApp textarea {{
-            background-color: {card} !important;
-            color: {text} !important;
-        }}
+html, body, p, span, label, li,
+h1,h2,h3,h4,h5,h6,
+.stMarkdown, .stMarkdown *,
+[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] *,
+[data-testid="stChatMessageContent"],
+[data-testid="stChatMessageContent"] *,
+[data-testid="stWidgetLabel"],
+[data-testid="stWidgetLabel"] *,
+.stCaption, .stCaption * {{
+    color:{text} !important;
+}}
 
-        .kpi-card {{
-            background: {card};
-            border: 1px solid {accent}33;
-            border-radius: 12px;
-            padding: 1rem 1.1rem;
-            margin-bottom: 0.5rem;
-            color: {text};
-        }}
-        .kpi-label {{
-            font-size: 0.85rem;
-            color: {muted};
-            opacity: 0.8;
-        }}
-        .kpi-value {{
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: {accent};
-        }}
-        </style>
-        """,
+a {{ color:{accent} !important; }}
+
+/* Inline code chips (e.g. Model name) — follow theme, not Streamlit dark chrome */
+code,
+[data-testid="stMarkdownContainer"] code,
+.stMarkdown code {{
+    background:{input_bg} !important;
+    color:{accent} !important;
+    border:1px solid {border} !important;
+    border-radius:6px !important;
+    padding:0.1rem 0.35rem !important;
+}}
+
+pre, [data-testid="stCode"] {{
+    background:{input_bg} !important;
+    border:1px solid {border} !important;
+}}
+
+pre code, [data-testid="stCode"] code {{
+    background:transparent !important;
+    border:none !important;
+    color:{text} !important;
+}}
+
+[data-testid="stChatMessage"]{{
+    background:{card} !important;
+    border:1px solid {border};
+    border-radius:14px;
+    padding:.4rem;
+}}
+
+.stButton>button,
+.stDownloadButton>button {{
+    background:{button} !important;
+    color:{button_text} !important;
+    border:none !important;
+    border-radius:10px;
+    transition:.2s;
+}}
+
+.stButton>button:hover,
+.stDownloadButton>button:hover {{
+    background:{button_hover} !important;
+    color:{button_text} !important;
+}}
+
+.stButton>button:focus,
+.stDownloadButton>button:focus {{
+    background:{button_hover} !important;
+    color:{button_text} !important;
+    box-shadow:none !important;
+}}
+
+[data-baseweb="select"]>div {{
+    background:{input_bg} !important;
+    color:{text} !important;
+    border:1px solid {border} !important;
+    box-shadow:none !important;
+}}
+
+[data-baseweb="select"] * {{ color:{text} !important; }}
+
+input, textarea {{
+    background:{input_bg} !important;
+    color:{text} !important;
+    border:1px solid {border} !important;
+    box-shadow:none !important;
+}}
+
+textarea::placeholder,
+input::placeholder {{ color:{muted} !important; }}
+
+/* Chat input bar + focus ring */
+[data-testid="stChatInput"],
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] [data-baseweb="base-input"],
+[data-testid="stChatInput"] [data-baseweb="textarea"],
+[data-testid="stChatInput"] textarea {{
+    background:{input_bg} !important;
+    color:{text} !important;
+    border:1px solid {border} !important;
+    box-shadow:none !important;
+}}
+
+[data-testid="stChatInput"]:focus-within,
+[data-testid="stChatInput"] > div:focus-within,
+[data-testid="stChatInput"] textarea:focus {{
+    border-color:{accent} !important;
+    box-shadow:0 0 0 1px {accent} !important;
+}}
+
+[data-testid="stBottomBlockContainer"] {{
+    background:{bg} !important;
+}}
+
+[data-testid="stDataFrame"] {{ background:{card} !important; }}
+[data-testid="stDataFrame"] * {{ color:{text} !important; }}
+
+[data-testid="stJson"] {{ background:{card} !important; }}
+
+.streamlit-expanderHeader {{ color:{text} !important; }}
+.streamlit-expanderContent {{ background:{card} !important; }}
+
+.kpi-card {{
+    background:{card};
+    border:1px solid {border};
+    border-radius:14px;
+    padding:18px;
+}}
+
+.kpi-label {{
+    color:{muted};
+    font-size:.9rem;
+}}
+
+.kpi-value {{
+    color:{accent};
+    font-size:1.7rem;
+    font-weight:700;
+}}
+
+</style>
+""",
         unsafe_allow_html=True,
     )
 

@@ -20,6 +20,10 @@ def chart_to_figure(spec: dict, theme: dict | None = None) -> go.Figure:
     y_label = spec.get("y_label") or ""
     template = theme.get("plotly_template", "plotly_white")
     accent = theme.get("accent", "#2563eb")
+    text_color = theme.get("text", "#1a1a1a")
+    muted = theme.get("muted", "#666666")
+    border = theme.get("border", "#d6dde8")
+    card = theme.get("card", "#ffffff")
 
     df = pd.DataFrame({"label": labels, "value": values})
 
@@ -32,6 +36,7 @@ def chart_to_figure(spec: dict, theme: dict | None = None) -> go.Figure:
         fig = px.area(df, x="label", y="value", title=title, template=template)
     elif chart_type == "pie":
         fig = px.pie(df, names="label", values="value", title=title, template=template)
+        fig.update_traces(textfont_color=text_color)
     elif chart_type == "scatter":
         fig = px.scatter(df, x="label", y="value", title=title, template=template)
         fig.update_traces(marker_color=accent)
@@ -60,10 +65,21 @@ def chart_to_figure(spec: dict, theme: dict | None = None) -> go.Figure:
         yaxis_title=y_label or None,
         margin=dict(l=40, r=20, t=60, b=40),
         height=420,
-        paper_bgcolor=theme.get("card", "#ffffff"),
-        plot_bgcolor=theme.get("card", "#ffffff"),
-        font_color=theme.get("text", "#1a1a1a"),
+        paper_bgcolor=card,
+        plot_bgcolor=card,
+        font=dict(color=text_color),
+        title_font=dict(color=text_color),
+        legend=dict(font=dict(color=text_color)),
     )
+    axis_kwargs = dict(
+        tickfont=dict(color=text_color),
+        title_font=dict(color=text_color),
+        gridcolor=border,
+        linecolor=muted,
+        zerolinecolor=border,
+    )
+    fig.update_xaxes(**axis_kwargs)
+    fig.update_yaxes(**axis_kwargs)
     if chart_type not in {"pie", "horizontal_bar"}:
         fig.update_xaxes(tickangle=-35)
     return fig

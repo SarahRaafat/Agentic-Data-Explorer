@@ -75,38 +75,36 @@ TIME_HINTS = (
 THEMES: dict[str, dict[str, str]] = {
     "light": {
         "name": "light",
-        "bg": "#f7f8fa",
-        "card": "#ffffff",
-        "text": "#1a1a1a",
-        "accent": "#2563eb",
+        "bg": "#f3eef9",
+        "card": "#faf7fd",
+        "text": "#1a1028",
+        "muted": "#5c4d70",
+        "accent": "#ae70e0",
+        "border": "#ddd0ef",
+        "shadow": "rgba(174,112,224,0.10)",
+        "button": "#ae70e0",
+        "button_hover": "#c48ef0",
+        "button_text": "#ffffff",
+        "input_bg": "#ede4f7",
         "plotly_template": "plotly_white",
     },
+
     "dark": {
         "name": "dark",
         "bg": "#0f1419",
         "card": "#1a2332",
         "text": "#e7ecf3",
+        "muted": "#9ca3af",
         "accent": "#60a5fa",
+        "border": "#334155",
+        "shadow": "rgba(0,0,0,0.45)",
+        "button": "#123a63",
+        "button_hover": "#0d2d4f",
+        "button_text": "#e7ecf3",
+        "input_bg": "#1a2332",
         "plotly_template": "plotly_dark",
     },
-    "corporate": {
-        "name": "corporate",
-        "bg": "#f0f4f8",
-        "card": "#ffffff",
-        "text": "#0b1f33",
-        "accent": "#0f4c81",
-        "plotly_template": "plotly_white",
-    },
-    "minimal": {
-        "name": "minimal",
-        "bg": "#fafafa",
-        "card": "#ffffff",
-        "text": "#222222",
-        "accent": "#444444",
-        "plotly_template": "simple_white",
-    },
 }
-
 # In-memory stores for filtered frames + last viz session artifacts
 _DATAFRAMES: dict[str, pd.DataFrame] = {}
 _SESSION: dict[str, Any] = {
@@ -623,7 +621,7 @@ def build_dashboard(
 
 @tool
 def change_theme(
-    theme: Literal["light", "dark", "corporate", "minimal"] = "light",
+    theme: Literal["light", "dark"] = "dark",
 ) -> dict:
     """Change dashboard appearance (colors/template) without changing data."""
     if theme not in THEMES:
@@ -871,7 +869,7 @@ Tools:
 - explain_visualization: how to read the chart
 - generate_dashboard_layout: page structure only
 - build_dashboard: full dashboard payload for the frontend
-- change_theme: light | dark | corporate | minimal
+- change_theme: light | dark
 - export_report: csv | excel | json | markdown | pdf
 - ask_visualization_critic: second-agent review of chart quality
 
