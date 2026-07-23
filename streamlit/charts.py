@@ -63,8 +63,8 @@ def chart_to_figure(spec: dict, theme: dict | None = None) -> go.Figure:
     fig.update_layout(
         xaxis_title=x_label or None,
         yaxis_title=y_label or None,
-        margin=dict(l=40, r=20, t=60, b=40),
-        height=420,
+        margin=dict(l=70, r=24, t=56, b=100 if chart_type not in {"pie", "horizontal_bar"} else 64),
+        height=440,
         paper_bgcolor=card,
         plot_bgcolor=card,
         font=dict(color=text_color),
@@ -77,6 +77,7 @@ def chart_to_figure(spec: dict, theme: dict | None = None) -> go.Figure:
         gridcolor=border,
         linecolor=muted,
         zerolinecolor=border,
+        automargin=True,
     )
     fig.update_xaxes(**axis_kwargs)
     fig.update_yaxes(**axis_kwargs)

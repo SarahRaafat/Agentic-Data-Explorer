@@ -1,13 +1,7 @@
 """PII-safe Instacart explorer + visualization agents.
 
-Shared by project.ipynb and the Streamlit frontend (app.py).
-
-Tools available to the viz agent:
-  list_data_files, run_python, filter_dataframe,
-  recommend_chart, create_visualization (alias: create_chart),
-  generate_insights, explain_visualization,
-  generate_dashboard_layout, build_dashboard,
-  change_theme, export_report, ask_visualization_critic
+Shared by Streamlit (streamlit/), Next.js API (nextjs/api/), and project.ipynb.
+Lives in shared/ next to archive (3)/ and .env.
 """
 
 from __future__ import annotations
@@ -15,6 +9,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import re
 import uuid
 from datetime import datetime, timezone
@@ -31,7 +26,7 @@ from langchain.tools import tool
 from langchain_core.messages import AIMessage, ToolMessage
 from pydantic import BaseModel, Field
 
-SPECIAL_TASK_DIR = Path(__file__).resolve().parent
+SPECIAL_TASK_DIR = Path(__file__).resolve().parent  # shared/
 DATA_DIR = (SPECIAL_TASK_DIR / "archive (3)").resolve()
 EXPORT_DIR = (SPECIAL_TASK_DIR / "exports").resolve()
 EXPORT_DIR.mkdir(exist_ok=True)
@@ -249,7 +244,8 @@ def run_python(code: str) -> str:
     DATA_DIR is a Path to the archive (3) folder. pandas is available as pd.
     Use safe_read_csv() for CSV loads — it drops PII columns such as user_id.
     Filtered frames are available as FILTERED[name] if you called filter_dataframe.
-    Never access user_id or other identifiers. Always print() results."""
+    Never access user_id or other identifiers. Always print() results.
+    Prefer Path / DATA_DIR joins — do not os.chdir into the data folder."""
     blocked = validate_code(code)
     if blocked:
         return blocked
@@ -263,6 +259,8 @@ def run_python(code: str) -> str:
         "json": json,
         "FILTERED": _DATAFRAMES,
     }
+    # Streamlit breaks if process cwd lands under "archive (3)/" (parentheses).
+    prev_cwd = os.getcwd()
     try:
         with contextlib.redirect_stdout(stdout):
             exec(code, {"__builtins__": __builtins__}, namespace)
@@ -270,6 +268,11 @@ def run_python(code: str) -> str:
         return output if output else "Code ran successfully (no printed output)."
     except Exception as e:
         return f"error: {type(e).__name__}: {e}"
+    finally:
+        try:
+            os.chdir(prev_cwd)
+        except OSError:
+            os.chdir(SPECIAL_TASK_DIR)
 
 
 @tool

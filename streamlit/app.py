@@ -1,6 +1,6 @@
 """Streamlit frontend: chat with the viz agent and render dashboards/charts.
 
-Run from this folder:
+Run from this folder (streamlit/):
     streamlit run app.py
 """
 
@@ -13,14 +13,30 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-SPECIAL_TASK_DIR = Path(__file__).resolve().parent
-# Keep cwd on project root — never under archive (3)/ (parentheses break Streamlit paths)
-os.chdir(SPECIAL_TASK_DIR)
-if str(SPECIAL_TASK_DIR) not in sys.path:
-    sys.path.insert(0, str(SPECIAL_TASK_DIR))
+STREAMLIT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = STREAMLIT_DIR.parent
+SHARED_DIR = REPO_ROOT / "shared"
+
+
+def _ensure_streamlit_cwd() -> None:
+    """Streamlit breaks if cwd is under archive (3)/ (parentheses in path)."""
+    try:
+        os.chdir(STREAMLIT_DIR)
+    except OSError:
+        pass
+
+
+# Keep cwd on streamlit/ — never under archive (3)/
+_ensure_streamlit_cwd()
+if str(SHARED_DIR) not in sys.path:
+    sys.path.insert(0, str(SHARED_DIR))
+if str(STREAMLIT_DIR) not in sys.path:
+    sys.path.insert(0, str(STREAMLIT_DIR))
 
 from agent_core import DATA_DIR, MODEL, THEMES, ask_viz  # noqa: E402
 from charts import chart_to_figure  # noqa: E402
+
+_ensure_streamlit_cwd()
 
 st.set_page_config(
     page_title="Instacart Viz Agent",
@@ -261,7 +277,7 @@ def render_sidebar() -> None:
         )
         st.markdown(f"**Model:** `{MODEL}`")
         st.markdown(f"**Dataset:** `{DATA_DIR.name}`")
-        st.caption(f"App dir: `{SPECIAL_TASK_DIR.name}`")
+        st.caption(f"App dir: `{STREAMLIT_DIR.name}`")
         if DATA_DIR.exists():
             files = sorted(p.name for p in DATA_DIR.glob("*.csv"))
             st.success(f"{len(files)} CSV files found")
@@ -464,6 +480,7 @@ def run_agent(question: str) -> None:
         with st.spinner("Agent is analyzing, visualizing, and reviewing…"):
             out = ask_viz(themed_q)
     except Exception as exc:
+        _ensure_streamlit_cwd()
         st.session_state.messages.append(
             {
                 "role": "assistant",
@@ -472,6 +489,8 @@ def run_agent(question: str) -> None:
             }
         )
         return
+    finally:
+        _ensure_streamlit_cwd()
 
     agent_theme = out.get("theme")
     if isinstance(agent_theme, dict) and agent_theme.get("name"):
@@ -500,6 +519,7 @@ def run_agent(question: str) -> None:
 
 
 def main() -> None:
+    _ensure_streamlit_cwd()
     init_state()
     apply_theme_css(st.session_state.theme)
     render_sidebar()

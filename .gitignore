@@ -1,5 +1,7 @@
 # Secrets & local env
 .venv/
+.venv_broken_special_task/
+shared/.env
 .env
 *.db
 checkpoints.db
@@ -10,17 +12,21 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Generated outputs
+shared/exports/*
+!shared/exports/.gitkeep
 exports/*
 !exports/.gitkeep
 
-# Dataset (too large for GitHub — see README)
+# Dataset (too large for GitHub)
+shared/archive (3)/*.csv
 archive (3)/*.csv
+
+# Next.js
+nextjs/web/node_modules/
+nextjs/web/.next/
+nextjs/web/out/
+nextjs/web/.env*.local
 
 # OS / editor
 .DS_Store
 Thumbs.db
-
-# Workshop leftovers (not part of this app)
-skills/
-policy/
-campus_server.py
