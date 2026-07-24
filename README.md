@@ -1,7 +1,24 @@
+---
+title: Agentic Data Explorer
+emoji: 📊
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Agentic Data Explorer
 
 PII-safe LangChain / LangGraph agent over Instacart Market Basket CSVs, with
 **two frontends** sharing one agent core.
+
+## Deploy (shareable link)
+
+**Streamlit Community Cloud** (GitHub login): see **[DEPLOY_STREAMLIT_CLOUD.md](DEPLOY_STREAMLIT_CLOUD.md)**  
+Main file: `streamlit/app.py` → public `https://….streamlit.app` URL.
+
+Optional Hugging Face Spaces (Docker): **[DEPLOY_HF_SPACES.md](DEPLOY_HF_SPACES.md)**
 
 ## Layout
 
@@ -9,7 +26,7 @@ PII-safe LangChain / LangGraph agent over Instacart Market Basket CSVs, with
 Agentic_data_explorer/
   shared/                 # common to both UIs
     agent_core.py         # agents, tools, PII middleware, themes
-    archive (3)/          # CSVs (local only — not in git)
+    archive (3)/          # CSVs (local / Space LFS — not in GitHub)
     exports/              # report downloads
     .env / .env.example   # ANTHROPIC_API_KEY
     requirements.txt
@@ -21,6 +38,8 @@ Agentic_data_explorer/
   nextjs/                 # Next.js UI + FastAPI
     api/                  # uvicorn → ask_viz
     web/                  # App Router frontend
+  Dockerfile              # HF Spaces / local Docker
+  DEPLOY_HF_SPACES.md
   README.md
 ```
 
@@ -51,12 +70,14 @@ If `pip` / `uvicorn` say they cannot find `special_task`, recreate `.venv` (old 
 
 ## Dataset
 
-CSVs are **not** in git. Download Instacart Market Basket Analysis from
+CSVs are **not** in the GitHub repo. Download Instacart Market Basket Analysis from
 [Kaggle](https://www.kaggle.com/c/instacart-market-basket-analysis/data) and put
 these in `shared/archive (3)/`:
 
 `aisles.csv`, `departments.csv`, `products.csv`, `orders.csv`,
 `order_products__prior.csv`, `order_products__train.csv`
+
+For Hugging Face Spaces, push them with **Git LFS** (see [DEPLOY_HF_SPACES.md](DEPLOY_HF_SPACES.md)).
 
 ## Run Streamlit
 
@@ -94,6 +115,7 @@ Open http://localhost:3000 (API must be on :8000).
 
 ## Notes
 
-- Never commit `shared/.env` or `shared/archive (3)/*.csv`.
+- Never commit `shared/.env` or (on GitHub) `shared/archive (3)/*.csv`.
 - Both UIs use `shared/agent_core.py`.
+- Streamlit resolves `shared/` via `Path(__file__)` (works under Docker / Spaces regardless of process CWD).
 - More Next.js detail: [`nextjs/README.md`](nextjs/README.md).

@@ -1,0 +1,28 @@
+.venv/
+.venv_broken_special_task/
+**/__pycache__/
+**/*.py[cod]
+**/.ipynb_checkpoints/
+**/*.db
+checkpoints.db
+
+# Secrets — use HF Space secrets instead
+shared/.env
+.env
+**/.env
+**/.env.local
+
+# Not needed for Streamlit Space
+nextjs/
+streamlit/project.ipynb
+
+# Generated exports (recreated at runtime)
+shared/exports/*
+!shared/exports/.gitkeep
+
+# Git / editor / docs (README kept for Space card)
+.git/
+.gitignore
+.DS_Store
+Thumbs.db
+DEPLOY_HF_SPACES.md

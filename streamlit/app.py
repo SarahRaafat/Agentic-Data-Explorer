@@ -26,8 +26,19 @@ def _ensure_streamlit_cwd() -> None:
         pass
 
 
+def _apply_streamlit_secrets() -> None:
+    """Map Streamlit Cloud secrets into env vars for agent_core / LangChain."""
+    try:
+        secret_key = st.secrets.get("ANTHROPIC_API_KEY", None)
+    except Exception:
+        secret_key = None
+    if secret_key and not os.environ.get("ANTHROPIC_API_KEY"):
+        os.environ["ANTHROPIC_API_KEY"] = str(secret_key)
+
+
 # Keep cwd on streamlit/ — never under archive (3)/
 _ensure_streamlit_cwd()
+_apply_streamlit_secrets()
 if str(SHARED_DIR) not in sys.path:
     sys.path.insert(0, str(SHARED_DIR))
 if str(STREAMLIT_DIR) not in sys.path:

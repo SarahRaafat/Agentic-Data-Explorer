@@ -1,0 +1,10 @@
+# Streamlit Community Cloud — install from repo root
+# (leaner than shared/requirements.txt: no Jupyter)
+streamlit>=1.32
+langchain[anthropic]>=1.0
+langgraph>=1.0
+pydantic>=2.7
+python-dotenv>=1.0
+pandas>=2.0
+plotly>=5.18
+openpyxl>=3.1
