@@ -26,29 +26,67 @@ def _ensure_streamlit_cwd() -> None:
         pass
 
 
+def _secret_key_names() -> list[str]:
+    """Top-level st.secrets key names (never values)."""
+    try:
+        return sorted(str(k) for k in st.secrets.keys())
+    except Exception:
+        return []
+
+
 def _apply_streamlit_secrets() -> bool:
     """Map Streamlit Cloud secrets into env vars for agent_core / LangChain.
 
     Returns True if ANTHROPIC_API_KEY is available after this call.
     """
-    if os.environ.get("ANTHROPIC_API_KEY"):
+    existing = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+    if existing:
         return True
 
-    secret_key = None
-    try:
-        # Flat: ANTHROPIC_API_KEY = "..."
-        if "ANTHROPIC_API_KEY" in st.secrets:
-            secret_key = st.secrets["ANTHROPIC_API_KEY"]
-        # Nested: [anthropic] api_key = "..."
-        elif "anthropic" in st.secrets:
-            block = st.secrets["anthropic"]
-            secret_key = block.get("api_key") or block.get("ANTHROPIC_API_KEY")
-    except Exception:
-        secret_key = None
+    found: str | None = None
 
-    if secret_key:
-        os.environ["ANTHROPIC_API_KEY"] = str(secret_key).strip()
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+    # 1) Flat top-level key (preferred)
+    try:
+        found = st.secrets["ANTHROPIC_API_KEY"]
+    except Exception:
+        found = None
+
+    # 2) Copy every top-level string secret into env (common Cloud pattern)
+    if not found:
+        try:
+            for key in st.secrets.keys():
+                val = st.secrets[key]
+                if isinstance(val, str) and val.strip():
+                    os.environ.setdefault(str(key), val.strip())
+                    if str(key) == "ANTHROPIC_API_KEY":
+                        found = val
+        except Exception:
+            pass
+
+    # 3) Nested tables: [anthropic] api_key = "..."
+    if not found:
+        try:
+            for key in st.secrets.keys():
+                val = st.secrets[key]
+                if isinstance(val, str):
+                    continue
+                try:
+                    mapping = dict(val)
+                except Exception:
+                    continue
+                for nk in ("ANTHROPIC_API_KEY", "api_key", "anthropic_api_key"):
+                    if nk in mapping and mapping[nk]:
+                        found = mapping[nk]
+                        break
+                if found:
+                    break
+        except Exception:
+            pass
+
+    if found and str(found).strip():
+        os.environ["ANTHROPIC_API_KEY"] = str(found).strip()
+
+    return bool((os.environ.get("ANTHROPIC_API_KEY") or "").strip())
 
 
 # Keep cwd on streamlit/ — never under archive (3)/
@@ -572,11 +610,16 @@ def main() -> None:
     )
 
     if not _apply_streamlit_secrets():
+        names = _secret_key_names()
         st.error(
-            "Missing **ANTHROPIC_API_KEY**. In Streamlit Cloud: "
-            "⋮ menu → **Settings** → **Secrets**, paste the block below, "
-            "then **Restart** the app.\n\n"
-            '```toml\nANTHROPIC_API_KEY = "sk-ant-your-key"\n```'
+            "Missing **ANTHROPIC_API_KEY** in Streamlit secrets.\n\n"
+            "1. Open [share.streamlit.io](https://share.streamlit.io) → your app → "
+            "**⚙️ Settings** → **Secrets** (not GitHub).\n"
+            "2. Delete everything in the box and paste **only** this one line "
+            "(with your real key):\n\n"
+            'ANTHROPIC_API_KEY = "sk-ant-..."\n\n'
+            "3. Click **Save**, then **Reboot app**.\n\n"
+            f"Secret keys Streamlit currently sees: `{names or '(none — secrets not loaded)'}`"
         )
 
     # Process queued question before rendering history
