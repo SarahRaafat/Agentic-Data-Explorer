@@ -909,8 +909,15 @@ _viz_agent = None
 
 def get_llm(model: str | None = None):
     global _llm
+    api_key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+    if not api_key:
+        raise ValueError(
+            "ANTHROPIC_API_KEY is not set. On Streamlit Cloud, add it under "
+            "App settings → Secrets as:\n"
+            'ANTHROPIC_API_KEY = "your_key_here"'
+        )
     if _llm is None or (model and model != MODEL):
-        _llm = init_chat_model(model or MODEL)
+        _llm = init_chat_model(model or MODEL, api_key=api_key)
     return _llm
 
 

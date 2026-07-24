@@ -26,14 +26,29 @@ def _ensure_streamlit_cwd() -> None:
         pass
 
 
-def _apply_streamlit_secrets() -> None:
-    """Map Streamlit Cloud secrets into env vars for agent_core / LangChain."""
+def _apply_streamlit_secrets() -> bool:
+    """Map Streamlit Cloud secrets into env vars for agent_core / LangChain.
+
+    Returns True if ANTHROPIC_API_KEY is available after this call.
+    """
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return True
+
+    secret_key = None
     try:
-        secret_key = st.secrets.get("ANTHROPIC_API_KEY", None)
+        # Flat: ANTHROPIC_API_KEY = "..."
+        if "ANTHROPIC_API_KEY" in st.secrets:
+            secret_key = st.secrets["ANTHROPIC_API_KEY"]
+        # Nested: [anthropic] api_key = "..."
+        elif "anthropic" in st.secrets:
+            block = st.secrets["anthropic"]
+            secret_key = block.get("api_key") or block.get("ANTHROPIC_API_KEY")
     except Exception:
         secret_key = None
-    if secret_key and not os.environ.get("ANTHROPIC_API_KEY"):
-        os.environ["ANTHROPIC_API_KEY"] = str(secret_key)
+
+    if secret_key:
+        os.environ["ANTHROPIC_API_KEY"] = str(secret_key).strip()
+    return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
 # Keep cwd on streamlit/ — never under archive (3)/
@@ -479,6 +494,21 @@ def run_agent(question: str) -> None:
     """Call the viz agent and store the result (no live chart render here)."""
     st.session_state.messages.append({"role": "user", "content": question})
 
+    if not _apply_streamlit_secrets():
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": (
+                    "Agent error: `ANTHROPIC_API_KEY` is missing. "
+                    "In Streamlit Cloud go to **App settings → Secrets** and add:\n\n"
+                    "```toml\nANTHROPIC_API_KEY = \"sk-ant-...\"\n```\n\n"
+                    "Then reboot the app."
+                ),
+                "payload": None,
+            }
+        )
+        return
+
     current = st.session_state.theme.get("name", "light")
     themed_q = question
     if "theme" not in question.lower() and "dark mode" not in question.lower():
@@ -540,6 +570,14 @@ def main() -> None:
         "Agentic frontend: **filter → recommend → visualize → critic → "
         "insights → dashboard → export / theme**."
     )
+
+    if not _apply_streamlit_secrets():
+        st.error(
+            "Missing **ANTHROPIC_API_KEY**. In Streamlit Cloud: "
+            "⋮ menu → **Settings** → **Secrets**, paste the block below, "
+            "then **Restart** the app.\n\n"
+            '```toml\nANTHROPIC_API_KEY = "sk-ant-your-key"\n```'
+        )
 
     # Process queued question before rendering history
     pending = st.session_state.pending_question
